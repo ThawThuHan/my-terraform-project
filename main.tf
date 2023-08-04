@@ -8,16 +8,6 @@ provider "aws" {
 #   instance_type	= "t2.micro"
 # }
 
-variable "vpc_cidr_block" {
-  description = "vpc cidr block"
-  type = string
-}
-
-variable "subnet_cidr_blocks" {
-  description = "subnet cidr blocks"
-  type = list(string)
-}
-
 resource "aws_vpc" "development-vpc" {
   cidr_block = var.vpc_cidr_block
   tags = {
