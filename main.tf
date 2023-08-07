@@ -8,37 +8,60 @@ provider "aws" {
 #   instance_type	= "t2.micro"
 # }
 
-resource "aws_vpc" "development-vpc" {
+resource "aws_vpc" "myapp-vpc" {
   cidr_block = var.vpc_cidr_block
   tags = {
-    Name = "development" 
+    Name = "${var.env_prefix}-vpc" 
   }
 }
 
-resource "aws_subnet" "private-subnet-1" {
-  vpc_id = aws_vpc.development-vpc.id
-  cidr_block = var.subnet_cidr_blocks[1]
-  availability_zone = "ap-southeast-1a"
+resource "aws_subnet" "myapp-subnet-1" {
+  vpc_id = aws_vpc.myapp-vpc.id
+  cidr_block = var.subnet_cidr_block
+  availability_zone = var.availability_zone
   tags = {
-    Name = "private-subnet-1"
+    Name = "${var.env_prefix}-private-subnet-1"
   }
 }
 
-data "aws_vpc" "default-vpc" {
-  default = true
+# data "aws_vpc" "default-vpc" {
+#   default = true
+# }
+
+resource "aws_internet_gateway" "myapp-igw" {
+  vpc_id = aws_vpc.myapp-vpc.id 
 }
 
-resource "aws_subnet" "default-private-subnet" {
-  vpc_id = data.aws_vpc.default-vpc.id
-  cidr_block = "172.31.64.0/20"
-  availability_zone = "ap-southeast-1b"
-  map_public_ip_on_launch = true
+#using existing route table that is created by default
+resource "aws_default_route_table" "main-rtb" {
+  default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.myapp-igw.id
+  }
+  tags = {
+    Name = "${var.env_prefix}-main-rtb"
+  }
 }
 
-output "development-vpc-id" {
-  value = aws_vpc.development-vpc.id
+resource "aws_route_table_association" "route-subnet-association" {
+  subnet_id = aws_subnet.myapp-subnet-1.id
+  route_table_id = aws_default_route_table.main-rtb.id
 }
 
-output "private-subnet-1-id" {
-  value = aws_subnet.private-subnet-1.id
-}
+# resource "aws_route_table" "myapp-route-table" {
+#   vpc_id = aws_vpc.myapp-vpc.id
+#   route {
+#     cidr_block = "0.0.0.0/0"
+#     gateway_id = aws_internet_gateway.myapp-igw.id
+#   }
+#   tags = {
+#     Name = "${var.env_prefix}-rtb"
+#   }
+# }
+
+# resource "aws_route_table_association" "route-subnet-association" {
+#   subnet_id = aws_subnet.myapp-subnet-1.id
+#   route_table_id = aws_route_table.myapp-route-table.id
+# }
