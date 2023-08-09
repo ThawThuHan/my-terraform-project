@@ -17,3 +17,11 @@ variable "subnet_cidr_block" {
   description = "subnet cidr block"
   type = string
 }
+
+variable "instance_type" {
+  type = string
+}
+
+variable "public_key_path" {
+  type = string
+}
