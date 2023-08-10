@@ -112,6 +112,9 @@ resource "aws_instance" "myapp" {
   subnet_id = aws_subnet.myapp-subnet-1.id
   vpc_security_group_ids = [ aws_security_group.myapp-sg.id ]
   key_name = aws_key_pair.ssh-key.key_name
+
+  user_data = file("entry-script.sh")
+
   tags = {
     Name = "${var.env_prefix}-myapp-server"
   }
