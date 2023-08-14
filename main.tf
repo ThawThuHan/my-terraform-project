@@ -115,30 +115,6 @@ resource "aws_instance" "myapp" {
 
   user_data = file("entry-script.sh")
 
-  connection {
-    type = "ssh"
-    host = self.public_ip
-    user = "ec2-user"
-    private_key = file(var.private_key_path)
-  }
-
-  provisioner "file" {
-    source = "entry-script.sh"
-    destination = "/home/ec2-user/entry-script-on-ec2.sh" 
-  }
-
-  provisioner "remote-exec" {
-    # inline = [ 
-    #   "export ENV=dev",
-    #   "mkdir newdir"
-    # ]
-    script = file(var.private_key_path)
-  }
-
-  provisioner "local-exec" {
-    command = "echo '${self.public_ip}' > output.txt"
-  }
-
   tags = {
     Name = "${var.env_prefix}-myapp-server"
   }
