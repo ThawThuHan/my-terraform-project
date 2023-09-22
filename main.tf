@@ -3,20 +3,25 @@ provider "aws" {
   region = "ap-southeast-1"
 }
 
-resource "aws_vpc" "myapp-vpc" {
-  cidr_block = var.vpc_cidr_block
-  tags = {
-    Name = "${var.env_prefix}-vpc" 
-  }
-}
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
 
-module "myapp-subnet" {
-  source = "./modules/subnet" 
-  subnet_cidr_block = var.subnet_cidr_block
-  availability_zone = var.availability_zone
-  env_prefix = var.env_prefix
-  vpc_id = aws_vpc.myapp-vpc.id
-  default_route_table_id = aws_vpc.myapp-vpc.default_route_table_id
+  name = "my-vpc"
+  cidr = var.vpc_cidr_block
+
+  azs             = [var.availability_zone]
+  #private_subnets = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+  public_subnets  = [var.subnet_cidr_block]
+  public_subnet_tags = {
+    Name = "${var.env_prefix}-subnet-1"
+  }
+
+  # enable_nat_gateway = true
+  # enable_vpn_gateway = true
+
+  tags = {
+    Name = "${var.env_prefix}-vpc"
+  }
 }
 
 # resource "aws_route_table" "myapp-route-table" {
@@ -37,9 +42,9 @@ module "myapp-subnet" {
 
 module "webserver" {
   source = "./modules/webserver"
-  subnet_id = module.myapp-subnet.subnet.id
+  subnet_id = module.vpc.public_subnets[0]
   instance_type = var.instance_type
   env_prefix = var.env_prefix
   public_key_path = var.public_key_path
-  vpc_id = aws_vpc.myapp-vpc.id
+  vpc_id = module.vpc.vpc_id
 }
